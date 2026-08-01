@@ -45,6 +45,10 @@ Wildcards inside quotes work:
 
   $ duf --only-mp '/sys/*,/dev/*'
 
+Use --dereference to include backing volumes reached through symlinks matched by mount-point patterns:
+
+  $ duf --dereference --only-mp '/Volumes/*'
+
 Filter by total volume size:
 
   $ duf --gte 10G

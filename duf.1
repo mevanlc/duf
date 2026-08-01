@@ -1,4 +1,4 @@
-.TH DUF 1 "2026-07-31" "duf" "Disk Usage/Free Utility"
+.TH DUF 1 "2026-08-01" "duf" "Disk Usage/Free Utility"
 .SH NAME
 duf - Disk Usage/Free Utility
 .SH SYNOPSIS
@@ -27,16 +27,19 @@ include pseudo, duplicate, inaccessible file systems
 \fB--avail-threshold\fP
 specifies the coloring threshold (yellow, red) of the avail column, must be integer with optional SI prefixes
 .TP
+\fB-L, --dereference\fP
+dereference symlinks matched by mount point filters
+.TP
 \fB--gte\fP
 only show entries with a total size greater than or equal to this size
 .TP
 \fB--hide\fP
 hide specific devices, separated with commas: local, network, fuse, special, loops, binds
 .TP
-\fB--hide-fs\fP
+\fB-F, --hide-fs\fP
 hide specific filesystems, separated with commas
 .TP
-\fB--hide-mp\fP
+\fB-U, --hide-mp\fP
 hide specific mount points, separated with commas (supports wildcards)
 .TP
 \fB-h, --human-readable\fP
@@ -45,22 +48,22 @@ ignored, just for df compatibility
 \fB--inodes\fP
 list inode information instead of block usage
 .TP
-\fB--json\fP
+\fB-J, --json\fP
 output devices in JSON format
 .TP
-\fB--only\fP
+\fB-i, --only\fP
 show only specific devices, separated with commas: local, network, fuse, special, loops, binds
 .TP
-\fB--only-fs\fP
+\fB-f, --only-fs\fP
 only specific filesystems, separated with commas
 .TP
-\fB--only-mp\fP
+\fB-u, --only-mp\fP
 only specific mount points, separated with commas (supports wildcards)
 .TP
-\fB--output\fP
+\fB-o, --output\fP
 output fields: mountpoint, size, used, avail, usage, inodes, inodes_used, inodes_avail, inodes_usage, type, filesystem
 .TP
-\fB--sort\fP
+\fB-R, --sort\fP
 sort output by: mountpoint, size, used, avail, usage, inodes, inodes_used, inodes_avail, inodes_usage, type, filesystem
 .TP
 \fB--style\fP
@@ -127,6 +130,12 @@ Wildcards inside quotes work:
 .PP
 .PP
   $ duf --only-mp '/sys/*,/dev/*'
+.PP
+.PP
+Use --dereference to include backing volumes reached through symlinks matched by mount-point patterns:
+.PP
+.PP
+  $ duf --dereference --only-mp '/Volumes/*'
 .PP
 .PP
 Filter by total volume size:

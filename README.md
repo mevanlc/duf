@@ -96,6 +96,11 @@ Wildcards inside quotes work:
 
     duf --only-mp '/sys/*,/dev/*'
 
+Use `-L` or `--dereference` to include backing volumes reached through symlinks
+matched by mount-point patterns:
+
+    duf -L -u /Volumes/'*'
+
 You can filter by total volume size:
 
     duf --gte 10G
@@ -140,6 +145,22 @@ depending on how much space is still available. You can set your own thresholds:
 If you prefer your output as JSON:
 
     duf --json
+
+### Short options
+
+These filtering and output options have short forms:
+
+| Short | Long |
+|---|---|
+| `-L` | `--dereference` |
+| `-F` | `--hide-fs` |
+| `-U` | `--hide-mp` |
+| `-J` | `--json` |
+| `-i` | `--only` |
+| `-f` | `--only-fs` |
+| `-u` | `--only-mp` |
+| `-o` | `--output` |
+| `-R` | `--sort` |
 
 ## Troubleshooting
 

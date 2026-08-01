@@ -33,15 +33,16 @@ var (
 
 	all         = flag.Bool("all", false, "include pseudo, duplicate, inaccessible file systems")
 	hideDevices = flag.String("hide", "", "hide specific devices, separated with commas:\n"+allowedValues)
-	hideFs      = flag.String("hide-fs", "", "hide specific filesystems, separated with commas")
-	hideMp      = flag.String("hide-mp", "", "hide specific mount points, separated with commas (supports wildcards)")
+	hideFs      = flag.StringP("hide-fs", "F", "", "hide specific filesystems, separated with commas")
+	hideMp      = flag.StringP("hide-mp", "U", "", "hide specific mount points, separated with commas (supports wildcards)")
+	dereference = flag.BoolP("dereference", "L", false, "dereference symlinks matched by mount point filters")
 	gte         = flag.String("gte", "", "only show entries with a total size greater than or equal to this size")
-	onlyDevices = flag.String("only", "", "show only specific devices, separated with commas:\n"+allowedValues)
-	onlyFs      = flag.String("only-fs", "", "only specific filesystems, separated with commas")
-	onlyMp      = flag.String("only-mp", "", "only specific mount points, separated with commas (supports wildcards)")
+	onlyDevices = flag.StringP("only", "i", "", "show only specific devices, separated with commas:\n"+allowedValues)
+	onlyFs      = flag.StringP("only-fs", "f", "", "only specific filesystems, separated with commas")
+	onlyMp      = flag.StringP("only-mp", "u", "", "only specific mount points, separated with commas (supports wildcards)")
 
-	output   = flag.String("output", "", "output fields: "+strings.Join(columnIDs(), ", "))
-	sortBy   = flag.String("sort", "mountpoint", "sort output by: "+strings.Join(columnIDs(), ", "))
+	output   = flag.StringP("output", "o", "", "output fields: "+strings.Join(columnIDs(), ", "))
+	sortBy   = flag.StringP("sort", "R", "mountpoint", "sort output by: "+strings.Join(columnIDs(), ", "))
 	width    = flag.Uint("width", 0, "max output width")
 	themeOpt = flag.String("theme", defaultThemeName(), "color themes: dark, light, ansi")
 	styleOpt = flag.String("style", defaultStyleName(), "style: unicode, ascii")
@@ -51,7 +52,7 @@ var (
 
 	_          = flag.BoolP("human-readable", "h", false, "ignored, just for df compatibility")
 	inodes     = flag.Bool("inodes", false, "list inode information instead of block usage")
-	jsonOutput = flag.Bool("json", false, "output devices in JSON format")
+	jsonOutput = flag.BoolP("json", "J", false, "output devices in JSON format")
 	warns      = flag.Bool("warnings", false, "output all warnings to STDERR")
 	version    = flag.Bool("version", false, "display version")
 )
@@ -282,6 +283,18 @@ func main() {
 		OnlyFilesystems:   parseCaseInsensitiveCommaSeparatedValues(*onlyFs),
 		HiddenMountPoints: parseCommaSeparatedValues(*hideMp),
 		OnlyMountPoints:   parseCommaSeparatedValues(*onlyMp),
+	}
+	if *dereference {
+		filters.HiddenMountPoints, err = dereferenceMountPointPatterns(m, filters.HiddenMountPoints)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		filters.OnlyMountPoints, err = dereferenceMountPointPatterns(m, filters.OnlyMountPoints)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 	err = validateGroups(filters.HiddenDevices)
 	if err != nil {

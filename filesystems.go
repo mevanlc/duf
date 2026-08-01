@@ -1,10 +1,47 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+// dereferenceMountPointPatterns adds the backing mount point of every symlink
+// matched by the supplied filesystem patterns.
+func dereferenceMountPointPatterns(mounts []Mount, patterns map[string]struct{}) (map[string]struct{}, error) {
+	var mountPoints []string
+	for pattern := range patterns {
+		matches, err := filepath.Glob(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("invalid mount point pattern %q: %w", pattern, err)
+		}
+
+		for _, match := range matches {
+			info, err := os.Lstat(match)
+			if err != nil {
+				return nil, fmt.Errorf("inspect mount point match %q: %w", match, err)
+			}
+			if info.Mode()&os.ModeSymlink == 0 {
+				continue
+			}
+
+			matchedMounts, err := findMounts(mounts, match)
+			if err != nil {
+				return nil, fmt.Errorf("dereference mount point match %q: %w", match, err)
+			}
+			for _, mount := range matchedMounts {
+				mountPoints = append(mountPoints, mount.Mountpoint)
+			}
+		}
+	}
+
+	for _, mountPoint := range mountPoints {
+		patterns[mountPoint] = struct{}{}
+	}
+
+	return patterns, nil
+}
 
 func findMounts(mounts []Mount, path string) ([]Mount, error) {
 	var err error
