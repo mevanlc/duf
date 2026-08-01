@@ -35,6 +35,7 @@ var (
 	hideDevices = flag.String("hide", "", "hide specific devices, separated with commas:\n"+allowedValues)
 	hideFs      = flag.String("hide-fs", "", "hide specific filesystems, separated with commas")
 	hideMp      = flag.String("hide-mp", "", "hide specific mount points, separated with commas (supports wildcards)")
+	gte         = flag.String("gte", "", "only show entries with a total size greater than or equal to this size")
 	onlyDevices = flag.String("only", "", "show only specific devices, separated with commas:\n"+allowedValues)
 	onlyFs      = flag.String("only-fs", "", "only specific filesystems, separated with commas")
 	onlyMp      = flag.String("only-mp", "", "only specific mount points, separated with commas (supports wildcards)")
@@ -50,7 +51,7 @@ var (
 
 	_          = flag.BoolP("human-readable", "h", false, "ignored, just for df compatibility")
 	inodes     = flag.Bool("inodes", false, "list inode information instead of block usage")
-	jsonOutput = flag.Bool("json", false, "output all devices in JSON format")
+	jsonOutput = flag.Bool("json", false, "output devices in JSON format")
 	warns      = flag.Bool("warnings", false, "output all warnings to STDERR")
 	version    = flag.Bool("version", false, "display version")
 )
@@ -109,10 +110,15 @@ func parseCommaSeparatedValues(values string) map[string]struct{} {
 			continue
 		}
 
-		v = strings.ToLower(v)
 		m[v] = struct{}{}
 	}
 	return m
+}
+
+// parseCaseInsensitiveCommaSeparatedValues parses comma separated strings and
+// normalizes them to lowercase.
+func parseCaseInsensitiveCommaSeparatedValues(values string) map[string]struct{} {
+	return parseCommaSeparatedValues(strings.ToLower(values))
 }
 
 // validateGroups validates the parsed group maps.
@@ -202,12 +208,19 @@ func main() {
 		os.Exit(0)
 	}
 
+	minimumTotalSize, err := parseMinimumTotalSize(*gte)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error parsing gte:", err)
+		os.Exit(1)
+	}
+
 	// read mount table
 	m, warnings, err := mounts()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	m = filterMountsByTotalSize(m, minimumTotalSize)
 
 	// print JSON
 	if *jsonOutput {
@@ -263,10 +276,10 @@ func main() {
 
 	// validate filters
 	filters := FilterOptions{
-		HiddenDevices:     parseCommaSeparatedValues(*hideDevices),
-		OnlyDevices:       parseCommaSeparatedValues(*onlyDevices),
-		HiddenFilesystems: parseCommaSeparatedValues(*hideFs),
-		OnlyFilesystems:   parseCommaSeparatedValues(*onlyFs),
+		HiddenDevices:     parseCaseInsensitiveCommaSeparatedValues(*hideDevices),
+		OnlyDevices:       parseCaseInsensitiveCommaSeparatedValues(*onlyDevices),
+		HiddenFilesystems: parseCaseInsensitiveCommaSeparatedValues(*hideFs),
+		OnlyFilesystems:   parseCaseInsensitiveCommaSeparatedValues(*onlyFs),
 		HiddenMountPoints: parseCommaSeparatedValues(*hideMp),
 		OnlyMountPoints:   parseCommaSeparatedValues(*onlyMp),
 	}

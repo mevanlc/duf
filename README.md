@@ -96,6 +96,13 @@ Wildcards inside quotes work:
 
     duf --only-mp '/sys/*,/dev/*'
 
+You can filter by total volume size:
+
+    duf --gte 10G
+
+This only shows entries whose total size is greater than or equal to the given
+human-readable size.
+
 ### Display options
 
 Sort the output:

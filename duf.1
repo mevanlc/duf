@@ -1,4 +1,4 @@
-.TH DUF 1 "2025-09-30" "duf" "Disk Usage/Free Utility"
+.TH DUF 1 "2026-07-31" "duf" "Disk Usage/Free Utility"
 .SH NAME
 duf - Disk Usage/Free Utility
 .SH SYNOPSIS
@@ -27,6 +27,9 @@ include pseudo, duplicate, inaccessible file systems
 \fB--avail-threshold\fP
 specifies the coloring threshold (yellow, red) of the avail column, must be integer with optional SI prefixes
 .TP
+\fB--gte\fP
+only show entries with a total size greater than or equal to this size
+.TP
 \fB--hide\fP
 hide specific devices, separated with commas: local, network, fuse, special, loops, binds
 .TP
@@ -43,7 +46,7 @@ ignored, just for df compatibility
 list inode information instead of block usage
 .TP
 \fB--json\fP
-output all devices in JSON format
+output devices in JSON format
 .TP
 \fB--only\fP
 show only specific devices, separated with commas: local, network, fuse, special, loops, binds
@@ -124,6 +127,15 @@ Wildcards inside quotes work:
 .PP
 .PP
   $ duf --only-mp '/sys/*,/dev/*'
+.PP
+.PP
+Filter by total volume size:
+.PP
+.PP
+  $ duf --gte 10G
+.PP
+.PP
+This only shows entries whose total size is greater than or equal to the given human-readable size\&.
 .PP
 .PP
 Sort the output:

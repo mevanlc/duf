@@ -25,6 +25,31 @@ type Mount struct {
 	Metadata   interface{} `json:"-"`
 }
 
+// parseMinimumTotalSize parses the optional minimum total size filter.
+func parseMinimumTotalSize(value string) (uint64, error) {
+	if value == "" {
+		return 0, nil
+	}
+
+	return stringToSize(value)
+}
+
+// filterMountsByTotalSize keeps mounts whose total size meets the minimum.
+func filterMountsByTotalSize(mounts []Mount, minimum uint64) []Mount {
+	if minimum == 0 {
+		return mounts
+	}
+
+	filtered := make([]Mount, 0, len(mounts))
+	for _, mount := range mounts {
+		if mount.Total >= minimum {
+			filtered = append(filtered, mount)
+		}
+	}
+
+	return filtered
+}
+
 func readLines(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
