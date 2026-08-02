@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/muesli/mango"
 	mpflag "github.com/muesli/mango-pflag"
@@ -21,6 +22,10 @@ func init() {
 If you supply arguments, duf will only list specific devices & mount points:
 
   $ duf /home /some/file
+
+For compatibility with commands and aliases written for GNU or BSD du, -h selects duf's default human-readable output; -D, -H, and -L enable --dereference; -P disables it; -t SIZE acts as --gte SIZE; and -r acts as --warnings. The following shorthand options are accepted but otherwise ignored:
+
+  -a -A -b -B SIZE -c -d DEPTH -g -I MASK -k -l -m -n -s -S -x -X FILE
 
 If you want to list everything (including pseudo, duplicate, inaccessible file systems):
 
@@ -100,7 +105,13 @@ If you prefer your output as JSON:
 		WithSection("Copyright", "Copyright (C) 2020-2022 Christian Muehlhaeuser <https://github.com/muesli>\n"+
 			"Released under MIT license.")
 
-	flag.VisitAll(mpflag.PFlagVisitor(manPage))
+	visitor := mpflag.PFlagVisitor(manPage)
+	flag.VisitAll(func(f *flag.Flag) {
+		if strings.HasPrefix(f.Name, "du-") {
+			return
+		}
+		visitor(f)
+	})
 	fmt.Println(manPage.Build(roff.NewDocument()))
 	os.Exit(0)
 }

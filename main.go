@@ -57,6 +57,61 @@ var (
 	version    = flag.Bool("version", false, "display version")
 )
 
+type duCompatibilityFlag struct {
+	name          string
+	shorthand     string
+	requiresValue bool
+}
+
+var duNoopCompatibilityFlags = []duCompatibilityFlag{
+	{name: "du-all", shorthand: "a"},
+	{name: "du-apparent-size", shorthand: "A"},
+	{name: "du-bytes", shorthand: "b"},
+	{name: "du-block-size", shorthand: "B", requiresValue: true},
+	{name: "du-total", shorthand: "c"},
+	{name: "du-max-depth", shorthand: "d", requiresValue: true},
+	{name: "du-gibibytes", shorthand: "g"},
+	{name: "du-ignore", shorthand: "I", requiresValue: true},
+	{name: "du-kibibytes", shorthand: "k"},
+	{name: "du-count-links", shorthand: "l"},
+	{name: "du-mebibytes", shorthand: "m"},
+	{name: "du-ignore-nodump", shorthand: "n"},
+	{name: "du-summarize", shorthand: "s"},
+	{name: "du-separate-dirs", shorthand: "S"},
+	{name: "du-one-file-system", shorthand: "x"},
+	{name: "du-exclude-from", shorthand: "X", requiresValue: true},
+}
+
+func registerDUCompatibilityFlags(flagSet *flag.FlagSet, threshold *string, warnings, dereferenceSymlinks *bool) {
+	for _, compatibilityFlag := range duNoopCompatibilityFlags {
+		usage := "ignored, just for du compatibility"
+		if compatibilityFlag.requiresValue {
+			flagSet.StringP(compatibilityFlag.name, compatibilityFlag.shorthand, "", usage)
+		} else {
+			flagSet.BoolP(compatibilityFlag.name, compatibilityFlag.shorthand, false, usage)
+		}
+		_ = flagSet.MarkHidden(compatibilityFlag.name)
+	}
+
+	flagSet.StringVarP(threshold, "du-threshold", "t", "", "alias for --gte")
+	_ = flagSet.MarkHidden("du-threshold")
+	flagSet.BoolVarP(warnings, "du-report-errors", "r", false, "alias for --warnings")
+	_ = flagSet.MarkHidden("du-report-errors")
+	flagSet.BoolVarP(dereferenceSymlinks, "du-dereference-args", "D", false, "alias for --dereference")
+	_ = flagSet.MarkHidden("du-dereference-args")
+	flagSet.BoolVarP(dereferenceSymlinks, "du-dereference-command-line", "H", false, "alias for --dereference")
+	_ = flagSet.MarkHidden("du-dereference-command-line")
+	flagSet.BoolFuncP("du-no-dereference", "P", "disable --dereference", func(string) error {
+		*dereferenceSymlinks = false
+		return nil
+	})
+	_ = flagSet.MarkHidden("du-no-dereference")
+}
+
+func init() {
+	registerDUCompatibilityFlags(flag.CommandLine, gte, warns, dereference)
+}
+
 // renderJSON encodes the JSON output and prints it.
 func renderJSON(m []Mount) error {
 	output, err := json.MarshalIndent(m, "", " ")

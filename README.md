@@ -75,6 +75,16 @@ If you want to list everything (including pseudo, duplicate, inaccessible file s
 
     duf --all
 
+### `du` compatibility
+
+For compatibility with commands and aliases written for GNU or BSD `du`, `-h`
+selects duf's default human-readable output; `-D`, `-H`, and `-L` enable
+`--dereference`; `-P` disables it; `-t SIZE` acts as `--gte SIZE`; and `-r` acts
+as `--warnings`. The following shorthand options are accepted but otherwise
+ignored:
+
+    -a -A -b -B SIZE -c -d DEPTH -g -I MASK -k -l -m -n -s -S -x -X FILE
+
 ### Filtering
 
 You can show and hide specific tables:
