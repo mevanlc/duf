@@ -1,167 +1,61 @@
-# duf
+# a duf fork
 
-[![Latest Release](https://img.shields.io/github/release/muesli/duf.svg?style=for-the-badge)](https://github.com/muesli/duf/releases)
-[![Go Doc](https://img.shields.io/badge/godoc-reference-blue.svg?style=for-the-badge)](https://pkg.go.dev/github.com/muesli/duf)
-[![Software License](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)](/LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/muesli/duf/build.yml?style=for-the-badge&branch=master)](https://github.com/muesli/duf/actions)
-[![Go ReportCard](https://goreportcard.com/badge/github.com/muesli/duf?style=for-the-badge)](https://goreportcard.com/report/muesli/duf)
+This is a fork of [duf](https://github.com/muesli/duf), a disk usage/free
+utility for Linux, BSD, macOS, and Windows. See the
+[upstream repository](https://github.com/muesli/duf) for installation
+instructions and full documentation.
 
-Disk Usage/Free Utility (Linux, BSD, macOS & Windows)
+## about this fork
 
-![duf](/duf.png)
+This fork keeps the upstream interface and adds:
 
-## Features
+- minimum total-capacity filtering with `--gte`;
+- case-preserving mount-point filters with optional symlink dereferencing; and
+- short forms for common options plus GNU/BSD `du` shorthand compatibility.
 
-- [x] User-friendly, colorful output
-- [x] Adjusts to your terminal's theme & width
-- [x] Sort the results according to your needs
-- [x] Groups & filters devices
-- [x] Can conveniently output JSON
+### minimum volume size
 
-## Installation
+`--gte SIZE` keeps only filesystems whose total capacity is greater than or
+equal to `SIZE`:
 
-### Packages
+```console
+duf --gte 10G
+duf --json --gte 10G
+```
 
-#### Linux
-- Arch Linux: `pacman -S duf`
-- Ubuntu (22.04 and later) / Debian (12 and later): `apt install duf`
-- Fedora Linux: `dnf install duf`
-- Nix: `nix-env -iA nixpkgs.duf`
-- Void Linux: `xbps-install -S duf`
-- Gentoo Linux: `emerge sys-fs/duf`
-- Solus: `eopkg it duf`
-- [Packages](https://github.com/muesli/duf/releases) in Alpine, Debian & RPM formats
+The filter is applied before either table or JSON output. Without `--gte`, no
+size filter is applied. `SIZE` is an integer byte count optionally followed by
+uppercase `K`, `M`, `G`, `T`, `P`, or `E`; these suffixes scale in powers of
+1024. Decimal values and suffixes such as `GB` are not accepted.
 
-#### BSD
-- FreeBSD: `pkg install duf`
-- OpenBSD: `pkg_add duf`
+### mount-point filtering and symlinks
 
-#### macOS
-- with [Homebrew](https://brew.sh/): `brew install duf`
-- with [MacPorts](https://www.macports.org): `sudo port selfupdate && sudo port install duf`
+Values passed to `--only-mp` and `--hide-mp` preserve their original case, and
+mount-point wildcard matching is case-sensitive. For example, `/Volumes/D`
+remains distinct from `/volumes/d`:
 
-#### Windows
-- with [Chocolatey](https://chocolatey.org/): `choco install duf`
-- with [scoop](https://scoop.sh/): `scoop install duf`
+```console
+duf --only-mp '/Volumes/*'
+```
 
-#### Android
-- Android (via termux): `pkg install duf`
+By default, these filters match mount-point paths only. `-L` or `--dereference`
+also resolves symlinks matched by the filters and includes their backing mount
+points:
 
-### Binaries
-- [Binaries](https://github.com/muesli/duf/releases) for Linux, FreeBSD, OpenBSD, macOS, Windows
+```console
+duf -L -u /Volumes/'*'
+```
 
-### From source
+Dereferencing applies to both `--only-mp` and `--hide-mp` patterns.
+Mount-point filters and dereferencing affect table output; JSON output is
+returned before these filters are applied.
 
-Make sure you have a working Go environment (Go 1.23 or higher is required).
-See the [install instructions](https://golang.org/doc/install.html).
+### short options
 
-Compiling duf is easy, simply run:
-
-    git clone https://github.com/muesli/duf.git
-    cd duf
-    go build
-
-## Usage
-
-You can simply start duf without any command-line arguments:
-
-    duf
-
-If you supply arguments, duf will only list specific devices & mount points:
-
-    duf /home /some/file
-
-If you want to list everything (including pseudo, duplicate, inaccessible file systems):
-
-    duf --all
-
-### `du` compatibility
-
-For compatibility with commands and aliases written for GNU or BSD `du`, `-h`
-selects duf's default human-readable output; `-D`, `-H`, and `-L` enable
-`--dereference`; `-P` disables it; `-t SIZE` acts as `--gte SIZE`; and `-r` acts
-as `--warnings`. The following shorthand options are accepted but otherwise
-ignored:
-
-    -a -A -b -B SIZE -c -d DEPTH -g -I MASK -k -l -m -n -s -S -x -X FILE
-
-### Filtering
-
-You can show and hide specific tables:
-
-    duf --only local,network,fuse,special,loops,binds
-    duf --hide local,network,fuse,special,loops,binds
-
-You can also show and hide specific filesystems:
-
-    duf --only-fs tmpfs,vfat
-    duf --hide-fs tmpfs,vfat
-
-...or specific mount points:
-
-    duf --only-mp /,/home,/dev
-    duf --hide-mp /,/home,/dev
-
-Wildcards inside quotes work:
-
-    duf --only-mp '/sys/*,/dev/*'
-
-Use `-L` or `--dereference` to include backing volumes reached through symlinks
-matched by mount-point patterns:
-
-    duf -L -u /Volumes/'*'
-
-You can filter by total volume size:
-
-    duf --gte 10G
-
-This only shows entries whose total size is greater than or equal to the given
-human-readable size.
-
-### Display options
-
-Sort the output:
-
-    duf --sort size
-
-Valid keys are: `mountpoint`, `size`, `used`, `avail`, `usage`, `inodes`,
-`inodes_used`, `inodes_avail`, `inodes_usage`, `type`, `filesystem`.
-
-Show or hide specific columns:
-
-    duf --output mountpoint,size,usage
-
-Valid keys are: `mountpoint`, `size`, `used`, `avail`, `usage`, `inodes`,
-`inodes_used`, `inodes_avail`, `inodes_usage`, `type`, `filesystem`.
-
-List inode information instead of block usage:
-
-    duf --inodes
-
-If duf doesn't detect your terminal's colors correctly, you can set a theme:
-
-    duf --theme light
-
-### Color-coding & Thresholds
-
-duf highlights the availability & usage columns in red, green, or yellow,
-depending on how much space is still available. You can set your own thresholds:
-
-    duf --avail-threshold="10G,1G"
-    duf --usage-threshold="0.5,0.9"
-
-### Bonus
-
-If you prefer your output as JSON:
-
-    duf --json
-
-### Short options
-
-These filtering and output options have short forms:
+Common filtering and output options have these short forms:
 
 | Short | Long |
-|---|---|
+| --- | --- |
 | `-L` | `--dereference` |
 | `-F` | `--hide-fs` |
 | `-U` | `--hide-mp` |
@@ -172,16 +66,34 @@ These filtering and output options have short forms:
 | `-o` | `--output` |
 | `-R` | `--sort` |
 
-## Troubleshooting
+### `du` shorthand compatibility
 
-Users of `oh-my-zsh` should be aware that it already defines an alias called
-`duf`, which you will have to remove in order to use `duf`:
+Commands and aliases written for GNU or BSD `du` can use these shorthands:
 
-    unalias duf
+- `-h` selects duf's default human-readable output;
+- `-D`, `-H`, and `-L` enable `--dereference`, while `-P` disables it (the last
+  option wins);
+- `-t SIZE` acts as `--gte SIZE`; and
+- `-r` acts as `--warnings`.
 
-## Feedback
+The following shorthands are accepted but otherwise ignored:
 
-Got some feedback or suggestions? Please open an issue or drop me a note!
+```text
+-a -A -b -B SIZE -c -d DEPTH -g -I MASK -k -l -m -n -s -S -x -X FILE
+```
 
-* [Twitter](https://twitter.com/mueslix)
-* [The Fediverse](https://mastodon.social/@fribbledom)
+These ignored flags provide input compatibility; they do not make duf emulate
+the corresponding `du` behavior.
+
+## building
+
+Building requires Go 1.23 or newer:
+
+```console
+go build
+```
+
+## license
+
+duf is released under the MIT License. Portions copied and modified from
+gopsutil retain their BSD license terms. See [LICENSE](LICENSE) for both texts.
